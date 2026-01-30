@@ -6,8 +6,8 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-from src.auth.models import User  # Import models to register them with Alembic
-from src.books.models import Book  # Import models to register them with Alembic
+from src.models.auth.models import User  # Import models to register them with Alembic
+from src.models.books.models import Book  # Import models to register them with Alembic
 from sqlmodel import SQLModel
 from src.config import Config
 

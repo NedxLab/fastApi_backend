@@ -4,6 +4,7 @@ from src.config import Config
 import jwt
 import uuid
 import logging
+from fastapi import Depends, HTTPException, status, Request
 
 
 passwordContext = CryptContext(
@@ -47,9 +48,9 @@ def decode_access_token(token: str) -> dict:
         )
         return payload
     except jwt.ExpiredSignatureError:
-        raise ValueError("Token has expired")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access token has expired.")
     except jwt.InvalidTokenError:
-        raise ValueError("Invalid token")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid access token.")
     except jwt.PyJWTError as e:
         logging.error(f"JWT Error: {e}")
-        raise ValueError("Token decoding error")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token decoding error")

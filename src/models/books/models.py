@@ -1,9 +1,12 @@
-from sqlmodel import Field, SQLModel
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlmodel import Field, Relationship, SQLModel
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 import sqlalchemy.dialects.postgresql as pg
 from uuid import UUID, uuid4
 from datetime import datetime,timezone
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+ 
+if TYPE_CHECKING:
+    from src.models.auth import models
 
 class BookCreate(SQLModel):
     title: str = Field(sa_column=Column("title", String, nullable=False))
@@ -14,22 +17,37 @@ class BookCreate(SQLModel):
     publisher: str = Field(sa_column=Column("publisher", String, nullable=True))
     year: int = Field(sa_column=Column("year", Integer, nullable=True))
     genre: str = Field(sa_column=Column("genre", String, nullable=True))
-    created_by: Optional[UUID] = Field(sa_column=Column("created_by", pg.UUID(as_uuid=True), nullable=True, default=None, foreign_key="users.id"))
-
+    
 class Book(BookCreate, table=True):
+    __tablename__ = "books"
     id: UUID = Field(sa_column=Column("id", pg.UUID(as_uuid=True), nullable=False, default=uuid4, primary_key=True))
     created_at: datetime = Field(
         sa_column=Column("created_at", DateTime(timezone=True), nullable=False,default=lambda: datetime.now(timezone.utc) )
     )
+    created_by: Optional[UUID] = Field(
+    default=None,
+    foreign_key="users.id",
+    nullable=True
+    )
     updated_at: datetime = Field(
         sa_column=Column("updated_at", DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     )
+    user: Optional["models.User"] =  Relationship(back_populates="books")
     
     def __repr__(self):
         return f"<Book(id={self.id}, title={self.title}, author={self.author}, isbn={self.isbn})>"
 
-class BookResponse(SQLModel):
-    book: Book
+class UserBasicResponse(SQLModel): 
+    id: UUID
+    username: str
+    first_name: str
+    last_name: str
+    email: str
+
+class BookResponse(BookCreate):
+    id: UUID
+    created_at: datetime
+    user: Optional[UserBasicResponse] = None
 
 class BookUpdate(SQLModel):
     title: Optional[str] = None

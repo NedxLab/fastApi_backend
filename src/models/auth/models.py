@@ -1,10 +1,15 @@
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy import Column, Integer, String, DateTime
 import sqlalchemy.dialects.postgresql as pg
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional, TYPE_CHECKING
 from pydantic import   model_validator
+
+if TYPE_CHECKING:
+    from src.models.books import models
+
+ 
 
 class BaseUser(SQLModel):
     username: str = Field(
@@ -39,6 +44,8 @@ class User(BaseUser, table=True):
     hashed_password: str = Field(
         sa_column=Column(String(255), nullable=False), exclude=True
     )
+    books: List["Book"] =  Relationship(back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan", "lazy": "selectin"})
+   
     created_at: datetime = Field(
         default=lambda: datetime.now(timezone.utc),
         sa_column=Column(DateTime, default=datetime.now, nullable=False)
@@ -47,7 +54,6 @@ class User(BaseUser, table=True):
         default=None,
         sa_column=Column(DateTime, onupdate=datetime.now)
     )
-    
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email})>"
     
@@ -72,3 +78,13 @@ class UserUpdate(SQLModel):
     email: Optional[str] = Field(None, max_length=100)
     
     model_config = {"extra": "forbid"}
+
+# Import here to avoid circular dependency
+from src.models.books.models import Book
+
+class UserResponse(BaseUser):
+    id: UUID
+    is_verified: bool
+    books: List = []
+    created_at: datetime
+    updated_at: Optional[datetime]

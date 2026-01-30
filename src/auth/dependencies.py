@@ -5,7 +5,7 @@ from src.auth.utils import decode_access_token
 from src.db.redis import check_jti_in_blocklist
 from src.db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession 
-from .services import AuthService
+from ..services.auth.services import AuthService
 from uuid import uuid4,UUID
 
 user_service = AuthService()
@@ -52,6 +52,7 @@ class RefreshTokenBearer(TokenBearer):
 async def get_current_user(token: str = Depends(AccessTokenBearer()), session: AsyncSession = Depends(get_session)):
     user_details =  token
     user = await user_service.get_user_by_id(UUID(user_details.get("sub")), session)
+    print("Current user:", user)
     return user
 
 class RoleChecker:

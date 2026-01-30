@@ -3,16 +3,15 @@ from src.auth.dependencies import AccessTokenBearer, RefreshTokenBearer, RoleChe
 from src.db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession 
 from uuid import UUID
-from src.auth.models import CreateUser, LoginUser, User
-from src.auth.services import AuthService
+from src.models.auth.models import CreateUser, LoginUser, User, UserResponse
+from src.services.auth.services import AuthService
 
 
 auth_router = APIRouter()
 
 user_service = AuthService()
 refresh_token_auth = RefreshTokenBearer()
-token_auth = AccessTokenBearer()
-current_user =get_current_user()
+token_auth = AccessTokenBearer() 
 role_checker = RoleChecker(allowed_roles=["admin", "user"])
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED, response_model= User)
 async def register_user(user_data: CreateUser, session:AsyncSession=Depends(get_session)): 
@@ -35,9 +34,9 @@ async def refresh_access_token( session:AsyncSession=Depends (get_session), user
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Could not refresh access token")
     return {"access_token": new_token}
 
-@auth_router.get('/me')
-async def get_current_user(user:dict=Depends(get_current_user)):
-    return {"user": user}
+@auth_router.get('/me', response_model=UserResponse)
+async def get_current_user_endpoint(user:User=Depends(get_current_user)):
+    return user
 @auth_router.post("/logout", status_code=status.HTTP_200_OK)
 async def logout_user( session:AsyncSession=Depends (get_session), user_details:dict=Depends(token_auth)):
     print(user_details)

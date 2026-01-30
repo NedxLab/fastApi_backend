@@ -1,10 +1,11 @@
-from .models import User, CreateUser, LoginUser, UserUpdate
+from ...models.auth.models import User, CreateUser, LoginUser, UserUpdate
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select,desc 
+from sqlalchemy.orm import selectinload
 from uuid import uuid4,UUID
 from datetime import datetime,timedelta
-from .utils import hash_password, verify_password
-from .utils import create_access_token, decode_access_token
+from ...auth.utils import hash_password, verify_password
+from ...auth.utils import create_access_token, decode_access_token
 from fastapi.responses import JSONResponse
 
 
@@ -62,9 +63,13 @@ class AuthService:
         return user
     
     async def get_user_by_id(self, user_id: UUID, session: AsyncSession) -> User | None:
-        query = select(User).where(User.id == user_id)
-        result = await session.exec(query)
-        return result.first()
+       stmt = (
+        select(User)
+        .options(selectinload(User.books))
+        .where(User.id == user_id)
+       )
+       result = await session.exec(stmt)
+       return result.first()
     
     async def get_user_by_username(self, username: str, session: AsyncSession) -> User | None:
         query = select(User).where(User.username == username)

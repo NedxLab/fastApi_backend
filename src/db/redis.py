@@ -14,7 +14,6 @@ token_blocklist = aioredis.Redis(
 async def add_jti_to_blocklist(jti: str):
     await token_blocklist.set(name=jti, value="true", ex=JTI_EXPIRY)
 
-async def check_jti_in_blocklist(jti: str) -> bool:
-    print("Checking JTI in blocklist:", jti, token_blocklist)
+async def check_jti_in_blocklist(jti: str) -> bool: 
     result = await token_blocklist.exists(jti)
     return result > 0

@@ -1,4 +1,5 @@
-from ...models.auth.models import User, CreateUser, LoginUser, UserUpdate
+from ...models.auth.models import User
+from ...models.auth.schemas import CreateUser, LoginUser, UserUpdate
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select,desc 
 from sqlalchemy.orm import selectinload

@@ -3,7 +3,8 @@ from src.auth.dependencies import AccessTokenBearer, RefreshTokenBearer, RoleChe
 from src.db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession 
 from uuid import UUID
-from src.models.auth.models import CreateUser, LoginUser, User, UserResponse
+from src.models.auth.models import User
+from src.models.auth.schemas import CreateUser, LoginUser, UserResponse
 from src.services.auth.services import AuthService
 
 

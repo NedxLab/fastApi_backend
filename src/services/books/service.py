@@ -1,7 +1,8 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select,desc
 from sqlalchemy.orm import selectinload
-from src.models.books.models import Book, BookCreate, BookUpdate
+from src.models.books.models import Book
+from src.models.books.schemas import BookCreate, BookUpdate
 from uuid import uuid4,UUID
 from datetime import datetime
 
@@ -32,9 +33,9 @@ class BookService:
     
     async def get_books_by_user(self,  user_id: str, session:AsyncSession):
         print("Fetching books for user_id:", user_id)
-        stmt = select(Book).options(selectinload(Book.user)).where(Book.created_by == user_id)
+        stmt = select(Book).options(selectinload(Book.user),selectinload(Book.reviews)).where(Book.created_by == user_id)
         result = await session.exec(stmt)
-        return result.first()
+        return result.all()
     async def update_book(self, book_id: UUID, book_data: BookUpdate, session:AsyncSession):
         book = await session.get(Book, book_id)  
         if not book:

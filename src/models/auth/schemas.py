@@ -3,7 +3,7 @@ from uuid import UUID
 from typing import List, Optional
 from sqlmodel import Field, SQLModel
 from sqlalchemy import Column, String
-from pydantic import model_validator 
+from pydantic import model_validator ,BaseModel
 
 class BaseUser(SQLModel):
     username: str = Field(
@@ -15,10 +15,7 @@ class BaseUser(SQLModel):
     last_name: str = Field(
         sa_column=Column(String(50), nullable=False)
     )
-    role: str = Field(
-        sa_column=Column(String(20), nullable=False, server_default="user")
-    )
-    
+   
     email: str = Field(
         sa_column=Column(String(100), unique=True, nullable=False)
     )
@@ -64,3 +61,6 @@ class UserBasicResponse(BaseUser):
     is_verified: bool 
     created_at: datetime
     updated_at: Optional[datetime]
+
+class EmailModel(BaseModel):
+    addresses: List[str] 

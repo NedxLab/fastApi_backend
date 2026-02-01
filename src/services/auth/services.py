@@ -8,6 +8,9 @@ from datetime import datetime,timedelta
 from ...auth.utils import hash_password, verify_password
 from ...auth.utils import create_access_token, decode_access_token
 from fastapi.responses import JSONResponse
+from src.mail import mail, create_message
+from pydantic import EmailStr
+from src.auth.utils import decode_url_safe_token
 
 
 class AuthService:
@@ -48,7 +51,36 @@ class AuthService:
                 refresh_token = create_access_token(data={"sub": str(user.id), "username": user.username, "email": user.email, "role": user.role},refresh =True, expires_delta= timedelta(days=7))
                 return JSONResponse(content={"access_token": access_token, "refresh_token": refresh_token, "message": "Authentication successful", "user": str(user.model_dump(exclude={"hashed_password","created_at","updated_at"}))})
         return None
-
+    async def change_password(self, token: str, new_password: str, session: AsyncSession) -> User | None:
+        user_details = decode_url_safe_token(token)
+        user_email = user_details.get("email")
+        query = select(User).where(User.email == user_email)
+        result = await session.exec(query)
+        user = result.first()
+        if not user:
+            return None
+        user.hashed_password = hash_password(new_password)
+        user.updated_at = datetime.now()
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        return user
+    async def send_email(self, user_email:EmailStr, html:str ):
+        message = create_message(receipient= [user_email], subject="Verify your email", body=html)
+        res = await mail.send_message(message)
+        return res
+    async def verify_user(self, token:str, session: AsyncSession):
+        user_details = decode_url_safe_token(token)
+        user_email = user_details.get("email") 
+        query = select(User).where(User.email ==user_email)
+        result = await session.exec(query)
+        user = result.first()
+        user.is_verified = True
+        user.updated_at = datetime.now()
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        return user
     async def update_user(self, user_id: UUID, user_data: UserUpdate, session: AsyncSession) -> User | None:
         query = select(User).where(User.id == user_id)
         result = await session.exec(query)

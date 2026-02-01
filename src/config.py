@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import EmailStr
 
 class Settings(BaseSettings):
     DATABASE_URL: str
@@ -8,6 +9,14 @@ class Settings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int
     REDIS_DB: int
+    MAIL_USERNAME : str
+    MAIL_PASSWORD : str
+    MAIL_SERVER : str
+    MAIL_PORT : int
+    MAIL_FROM_EMAIL :EmailStr
+    MAIL_FROM_NAME : str
+    SERVER_URL:str
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     
 Config = Settings()

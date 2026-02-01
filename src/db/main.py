@@ -5,7 +5,7 @@ from src.models.books.models import Book
 from sqlalchemy.orm import sessionmaker
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-engine = create_engine(url=Config.DATABASE_URL, echo=True, future=True)    
+engine = create_engine(url=Config.DATABASE_URL,  future=True)    
 async_engine = AsyncEngine(engine)
 
 async def init_db():

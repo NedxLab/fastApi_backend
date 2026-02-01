@@ -19,6 +19,9 @@ class User(BaseUser, table=True):
         default=False,
         sa_column=Column(pg.BOOLEAN, default=False, nullable=False)
     )
+    role: str = Field(
+        sa_column=Column(String(20), nullable=False, server_default="user")
+    )
     hashed_password: str = Field(
         sa_column=Column(String(255), nullable=False), exclude=True
     )

@@ -5,6 +5,8 @@ import jwt
 import uuid
 import logging
 from fastapi import Depends, HTTPException, status, Request
+from src.errors import AccessTokenRequiredException
+from itsdangerous import URLSafeTimedSerializer
 
 
 passwordContext = CryptContext(
@@ -48,9 +50,24 @@ def decode_access_token(token: str) -> dict:
         )
         return payload
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access token has expired.")
+        raise AccessTokenRequiredException()
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid access token.")
     except jwt.PyJWTError as e:
         logging.error(f"JWT Error: {e}")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token decoding error")
+
+serializer = URLSafeTimedSerializer(
+        secret_key=Config.JWT_SECRET_KEY,
+        salt ="email-configuration"
+    )
+def create_url_safe_token(data:dict): 
+    token = serializer.dumps(data)
+    return token
+
+def decode_url_safe_token(token:str):
+    try:
+        result = serializer.loads(token)
+        return result
+    except Exception as e:
+        logging.error(str(e))

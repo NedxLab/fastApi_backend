@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Header, HTTPException, status, Depends 
+from fastapi import APIRouter, Header, HTTPException, status, Depends, BackgroundTasks
 from src.auth.dependencies import AccessTokenBearer, RefreshTokenBearer, RoleChecker,get_current_user
 from src.db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession 
@@ -9,8 +9,7 @@ from src.services.auth.services import AuthService
 from src.mail import mail, create_message
 from src.config import Config
 from src.auth.utils import create_url_safe_token
-from pydantic import EmailStr
-
+from pydantic import EmailStr 
 auth_router = APIRouter()
 
 user_service = AuthService()
@@ -18,7 +17,7 @@ refresh_token_auth = RefreshTokenBearer()
 token_auth = AccessTokenBearer() 
 role_checker = RoleChecker(allowed_roles=["admin", "user"])
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED, response_model= User)
-async def register_user(user_data: CreateUser, session:AsyncSession=Depends(get_session)): 
+async def register_user(user_data: CreateUser, bg_tasks:BackgroundTasks, session:AsyncSession=Depends(get_session)): 
     new_user = await user_service.register_user(user_data, session)
     if new_user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists") 
@@ -92,7 +91,8 @@ async def register_user(user_data: CreateUser, session:AsyncSession=Depends(get_
     </body>
     </html>
     """
-    await user_service.send_email(new_user.email,  html_message )
+    
+    user_service.send_email(new_user.email, "Verify Email" , html_message )
     return new_user
 
 @auth_router.post("/login", status_code=status.HTTP_201_CREATED)
@@ -110,7 +110,7 @@ async def change_password(token:str,newPassword:str, session:AsyncSession=Depend
     await user_service.change_password(token,newPassword, session)
     return {"message": "Password Changed successfully"}
 @auth_router.post("/reset-password/{email}", status_code=status.HTTP_200_OK)
-async def reset_password(email:EmailStr, session:AsyncSession=Depends(get_session)): 
+async def reset_password(email:EmailStr, bg_tasks:BackgroundTasks, session:AsyncSession=Depends(get_session)): 
     token = create_url_safe_token({"email": email})
     link = f"http://{Config.SERVER_URL}/api/v1/auth/change-password/{token}"
 
@@ -170,7 +170,7 @@ async def reset_password(email:EmailStr, session:AsyncSession=Depends(get_sessio
     </body>
     </html>
     """
-    await user_service.send_email(email,  html_message )
+    user_service.send_email(email, "Password Reset" , html_message)
     return {"message": "Password Reset link sent successfully"}
 
 @auth_router.get("/refresh-token", status_code=status.HTTP_200_OK)

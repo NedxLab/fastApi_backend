@@ -20,3 +20,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     
 Config = Settings()
+
+broker_url: str = (
+    f"redis://{Config.REDIS_HOST}:{Config.REDIS_PORT}/{Config.REDIS_DB}"
+)
+result_backend = broker_url
+broker_connection_retry_on_startup = True

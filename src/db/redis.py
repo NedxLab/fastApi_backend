@@ -1,15 +1,9 @@
 from redis import asyncio as aioredis
-from src.config import Config
+from src.config import Config, broker_url
 
 JTI_EXPIRY = 3600
 
-# Create Redis client
-token_blocklist = aioredis.Redis(
-    host=Config.REDIS_HOST, 
-    port=Config.REDIS_PORT, 
-    db=Config.REDIS_DB, 
-    decode_responses=True
-)
+token_blocklist = aioredis.from_url(broker_url)
 
 async def add_jti_to_blocklist(jti: str):
     await token_blocklist.set(name=jti, value="true", ex=JTI_EXPIRY)

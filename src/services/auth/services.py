@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from src.mail import mail, create_message
 from pydantic import EmailStr
 from src.auth.utils import decode_url_safe_token
+from src.celery_tasks import send_background_email
 
 
 class AuthService:
@@ -65,9 +66,8 @@ class AuthService:
         await session.commit()
         await session.refresh(user)
         return user
-    async def send_email(self, user_email:EmailStr, html:str ):
-        message = create_message(receipient= [user_email], subject="Verify your email", body=html)
-        res = await mail.send_message(message)
+    def send_email(self, user_email:EmailStr,subject:str, html:str ): 
+        res = send_background_email.delay(email=[user_email],subject=subject, body=html)
         return res
     async def verify_user(self, token:str, session: AsyncSession):
         user_details = decode_url_safe_token(token)
